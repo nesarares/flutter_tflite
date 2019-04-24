@@ -665,6 +665,10 @@ public class TflitePlugin implements MethodCallHandler {
     }
   }
 
+  private boolean inRange(float number, float max, float min) {
+    return number < max && number >= min;
+  }
+
   private class RunSSDMobileNet extends TfliteTask {
     int num;
     int numResultsPerClass;
@@ -706,7 +710,13 @@ public class TflitePlugin implements MethodCallHandler {
       for (int i = 0; i < numDetections[0]; ++i) {
         if (outputScores[0][i] < threshold) continue;
 
-        String detectedClass = labels.get((int) outputClasses[0][i] + 1);
+        final int classLabel = (int) outputClasses[0][i] + 1;
+
+        if (!inRange(classLabel, labels.size(), 0) || !inRange(outputScores[0][i], 1, 0)) {
+          continue;
+        }
+
+        String detectedClass = labels.get(classLabel);
 
         if (counters.get(detectedClass) == null) {
           counters.put(detectedClass, 1);
